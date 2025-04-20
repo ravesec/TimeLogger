@@ -76,6 +76,7 @@ class WorkLoggerApp:
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+        # Header labels
         self.current_time_label = tk.Label(
             root,
             text=f"Current Time: {datetime.now().strftime('%H:%M:%S %B %d, %Y')}",
@@ -101,11 +102,17 @@ class WorkLoggerApp:
         self.elapsed_time_label.pack()
 
         # Buttons
-        btn_opts = {'bg':'#03dac5','fg':'#121212','padx':10,'pady':10,'expand':True,'fill':'x'}
-        tk.Button(root, text="Clock In", command=self.start_logging, **btn_opts).pack(side='left')
-        tk.Button(root, text="Clock Out", command=self.stop_logging, **btn_opts).pack(side='left')
-        tk.Button(root, text="Manually Add Entry", command=self.add_entry, **btn_opts).pack(side='left')
-        tk.Button(root, text="View Date", command=self.view_date, **btn_opts).pack(side='left')
+        buttons = [
+            ("Clock In", self.start_logging),
+            ("Clock Out", self.stop_logging),
+            ("Manually Add Entry", self.add_entry),
+            ("View Date", self.view_date),
+        ]
+        for text, cmd in buttons:
+            widget_opts = {'bg': '#03dac5', 'fg': '#121212', 'text': text, 'command': cmd}
+            pack_opts = {'side': 'left', 'padx': 10, 'pady': 10, 'expand': True, 'fill': 'x'}
+            btn = tk.Button(root, **widget_opts)
+            btn.pack(**pack_opts)
 
         self.update_time()
         self.load_logs()

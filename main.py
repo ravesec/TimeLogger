@@ -53,14 +53,16 @@ def log_timecard(tc):
         "INSERT INTO timecards(start_time,end_time,valid,description) VALUES(?,?,?,?)",
         (tc.start_time, tc.end_time, int(tc.valid), tc.description)
     )
-    conn.commit(); conn.close()
+    conn.commit()
+    conn.close()
 
 
 def fetch_timecards():
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute("SELECT id,start_time,end_time,valid,description FROM timecards ORDER BY start_time")
-    rows = c.fetchall(); conn.close()
+    rows = c.fetchall()
+    conn.close()
     cards = []
     for rid, s, e, v, d in rows:
         tc = TimeCard(s, e, bool(v), d)
@@ -139,12 +141,13 @@ class WorkLoggerApp:
         self.root.after(1000, self.update_clock)
 
     def load_tree(self, cards=None):
-        for i in self.tree.get_children(): self.tree.delete(i)
+        for i in self.tree.get_children():
+            self.tree.delete(i)
         for tc in (cards or fetch_timecards()):
             dt = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')
             dur, hrs = tc.duration_hours()
             tag = 'invalid' if not tc.valid else ('no_desc' if not tc.description else '')
-            self.tree.insert('', 'end', iid=tc.id,
+            self.tree.insert('', 'end', iid=str(tc.id),
                 values=(dt.date(), dt.time(), datetime.strptime(tc.end_time,'%Y-%m-%d %H:%M:%S').time(), f"{hrs:.2f}", tc.description),
                 tags=(tag,))
 
@@ -168,14 +171,68 @@ class WorkLoggerApp:
         self.tree.heading(col, command=lambda: self.sort_tree(col, not reverse))
 
     def edit_entry(self, event):
-        # pop-up editor…
-        pass
+        sel = self.tree.selection()
+        if not sel:
+            return
+        tc_id = sel[0]
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute("SELECT start_time, end_time, valid, description FROM timecards WHERE id=?", (tc_id,))
+        row = c.fetchone()
+        conn.close()
+        if not row:
+            return
+        s, e, v, d = row
+        win = tk.Toplevel(self.root)
+        win.title("Edit Entry")
+        win.configure(bg='#121212')
+        frm = ttk.Frame(win, padding=10)
+        frm.pack(fill='both', expand=True)
+        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e', pady=2)
+        start_var = tk.StringVar(value=s)
+        ttk.Entry(frm, textvariable=start_var, width=25).grid(row=0, column=1, pady=2)
+        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e', pady=2)
+        end_var = tk.StringVar(value=e)
+        ttk.Entry(frm, textvariable=end_var, width=25).grid(row=1, column=1, pady=2)
+        valid_var = tk.BooleanVar(value=bool(v))
+        ttk.Checkbutton(frm, text="Valid", variable=valid_var).grid(row=2, column=1, sticky='w', pady=2)
+        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne', pady=2)
+        desc_text = tk.Text(frm, width=40, height=5)
+        desc_text.insert('1.0', d)
+        desc_text.grid(row=3, column=1, pady=2)
+        btn_frame = ttk.Frame(win, padding=10)
+        btn_frame.pack()
+        def save():
+            new_s = start_var.get()
+            new_e = end_var.get()
+            new_v = int(valid_var.get())
+            new_d = desc_text.get('1.0', 'end-1c')
+            try:
+                datetime.strptime(new_s, '%Y-%m-%d %H:%M:%S')
+                datetime.strptime(new_e, '%Y-%m-%d %H:%M:%S')
+            except Exception as ex:
+                messagebox.showerror("Error", f"Invalid date/time: {ex}")
+                return
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            c.execute(
+                "UPDATE timecards SET start_time=?, end_time=?, valid=?, description=? WHERE id=?",
+                (new_s, new_e, new_v, new_d, tc_id)
+            )
+            conn.commit()
+            conn.close()
+            self.load_tree()
+            messagebox.showinfo("Saved", "Entry updated")
+            win.destroy()
+        ttk.Button(btn_frame, text="Save", command=save).pack(side='left', padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=win.destroy).pack(side='left', padx=5)
 
     def start_logging(self):
         self.start_time = datetime.now()
 
     def stop_logging(self):
-        if not self.start_time: return
+        if not self.start_time:
+            return
         end = datetime.now()
         tc = TimeCard(self.start_time.strftime('%Y-%m-%d %H:%M:%S'), end.strftime('%Y-%m-%d %H:%M:%S'))
         log_timecard(tc)
@@ -185,7 +242,8 @@ class WorkLoggerApp:
     def add_entry(self):
         s = simpledialog.askstring("Start", "YYYY-MM-DD HH:MM:SS")
         e = simpledialog.askstring("End",   "YYYY-MM-DD HH:MM:SS")
-        if not s or not e: return
+        if not s or not e:
+            return
         try:
             datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
             datetime.strptime(e, '%Y-%m-%d %H:%M:%S')

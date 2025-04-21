@@ -101,11 +101,11 @@ class WorkLoggerApp:
         self.year_cb.pack(side='left', padx=5)
 
         # Filter / Clear
-        ttk.Button(frm, text="Filter", command=self.apply_filter).pack(side='left', padx=10)
-        ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left', padx=5)
+        self.filter_btn = ttk.Button(frm, text="Filter", command=self.apply_filter)
+        self.filter_btn.pack(side='left', padx=10)
+        self.clear_btn = ttk.Button(frm, text="Clear", command=self.clear_filter)
+        self.clear_btn.pack(side='left', padx=5)
 
-        # # initialize to current month/year
-        # self.clear_filter()
 
     def build_tree(self):
         cols = ('date', 'start time', 'end time', 'hours earned')
@@ -158,7 +158,7 @@ class WorkLoggerApp:
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
 
-        # Toggle clock button (no focus ring)
+        # Toggle clock button
         self.clock_btn = ttk.Button(
             frm,
             text="Clock In",
@@ -169,13 +169,14 @@ class WorkLoggerApp:
         self.clock_btn.pack(side='left', padx=10, pady=(0, 5))
 
         # Generate XLSX stub
-        ttk.Button(
+        self.xlsx_btn = ttk.Button(
             frm,
             text="Generate XLSX",
             command=self.generate_xlsx,
             style="Accent.TButton",
             takefocus=False
-        ).pack(side='left', padx=10, pady=(0, 5))
+        )
+        self.xlsx_btn.pack(side='left', padx=10, pady=(0, 5))
 
         # Add Entry
         ttk.Button(
@@ -187,22 +188,24 @@ class WorkLoggerApp:
         ).pack(side='left', padx=10, pady=(0, 5))
 
         # Export CSV
-        ttk.Button(
+        self.csv_btn = ttk.Button(
             frm,
             text="Export DB as CSV",
             command=self.export_csv,
             style="Accent.TButton",
             takefocus=False
-        ).pack(side='left', padx=10, pady=(0, 5))
+        )
+        self.csv_btn.pack(side='left', padx=10, pady=(0, 5))
 
         # PDF Report
-        ttk.Button(
+        self.pdf_btn = ttk.Button(
             frm,
             text="PDF Report",
             command=self.export_pdf_report,
             style="Accent.TButton",
             takefocus=False
-        ).pack(side='left', padx=10, pady=(0, 5))
+        )
+        self.pdf_btn.pack(side='left', padx=10, pady=(0, 5))
 
     def update_clock(self):
         now = datetime.now()
@@ -328,6 +331,14 @@ class WorkLoggerApp:
 
     def start_logging(self):
         self.start_time = datetime.now()
+        # disable controls while clocked in
+        self.month_cb.config(state='disabled')
+        self.year_cb.config(state='disabled')
+        self.filter_btn.config(state='disabled')
+        self.clear_btn.config(state='disabled')
+        self.xlsx_btn.config(state='disabled')
+        self.csv_btn.config(state='disabled')
+        self.pdf_btn.config(state='disabled')
 
     def stop_logging(self):
         if not self.start_time:
@@ -338,6 +349,14 @@ class WorkLoggerApp:
         log_timecard(tc)
         self.load_tree()
         self.start_time = None
+        # re‑enable controls once stopped
+        self.month_cb.config(state='readonly')
+        self.year_cb.config(state='readonly')
+        self.filter_btn.config(state='normal')
+        self.clear_btn.config(state='normal')
+        self.xlsx_btn.config(state='normal')
+        self.csv_btn.config(state='normal')
+        self.pdf_btn.config(state='normal')
 
     def toggle_logging(self):
         if not self.start_time:

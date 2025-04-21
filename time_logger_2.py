@@ -90,7 +90,7 @@ class WorkLoggerApp:
         ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left')
 
     def build_tree(self):
-        cols = ('date', 'start', 'end', 'hours')
+        cols = ('date', 'start time', 'end time', 'hours earned')
         self.tree = ttk.Treeview(self.root,
                                  columns=cols,
                                  show='headings',
@@ -139,21 +139,52 @@ class WorkLoggerApp:
     def build_buttons(self):
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
-        for txt, cmd in [
-            ("Clock In", self.start_logging),
-            ("Clock Out", self.stop_logging),
-            ("Add Entry", self.add_entry),
-            ("Export CSV", self.export_csv),
-            ("PDF Report", self.export_pdf_report),
-        ]:
-            ttk.Button(frm,
-                       text=txt,
-                       command=cmd,
-                       style="Accent.TButton"
-                       ).pack(side='left',
-                              padx=10,
-                              pady=(0, 5)  # ← adds 5px padding below each button
-                              )
+
+        # Toggle clock button (no focus ring)
+        self.clock_btn = ttk.Button(
+            frm,
+            text="Clock In",
+            command=self.toggle_logging,
+            style="Accent.TButton",
+            takefocus=False
+        )
+        self.clock_btn.pack(side='left', padx=10, pady=(0, 5))
+
+        # Generate XLSX stub
+        ttk.Button(
+            frm,
+            text="Generate XLSX",
+            command=self.generate_xlsx,
+            style="Accent.TButton",
+            takefocus=False
+        ).pack(side='left', padx=10, pady=(0, 5))
+
+        # Add Entry
+        ttk.Button(
+            frm,
+            text="Add Entry",
+            command=self.add_entry,
+            style="Accent.TButton",
+            takefocus=False
+        ).pack(side='left', padx=10, pady=(0, 5))
+
+        # Export CSV
+        ttk.Button(
+            frm,
+            text="Export CSV",
+            command=self.export_csv,
+            style="Accent.TButton",
+            takefocus=False
+        ).pack(side='left', padx=10, pady=(0, 5))
+
+        # PDF Report
+        ttk.Button(
+            frm,
+            text="PDF Report",
+            command=self.export_pdf_report,
+            style="Accent.TButton",
+            takefocus=False
+        ).pack(side='left', padx=10, pady=(0, 5))
 
     def update_clock(self):
         now = datetime.now()
@@ -268,6 +299,18 @@ class WorkLoggerApp:
         log_timecard(tc)
         self.load_tree()
         self.start_time = None
+
+    def toggle_logging(self):
+        if not self.start_time:
+            self.start_logging()
+            self.clock_btn.config(text="Clock Out")
+        else:
+            self.stop_logging()
+            self.clock_btn.config(text="Clock In")
+
+    def generate_xlsx(self):
+        # TODO: implement XLSX export
+        messagebox.showinfo("Generate XLSX", "This feature isn’t implemented yet.")
 
     def add_entry(self):
         AddEntryWindow(self)

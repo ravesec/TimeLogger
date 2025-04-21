@@ -1,12 +1,13 @@
 import tkinter as tk
-from tkinter import messagebox, simpledialog, ttk
+from tkinter import messagebox, ttk
 from tkcalendar import DateEntry
 from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 
-# ensure DB ready
+# ensure DB is ready
 init_db()
+
 
 class WorkLoggerApp:
     def __init__(self, root):
@@ -51,7 +52,7 @@ class WorkLoggerApp:
         ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left')
 
     def build_tree(self):
-        cols = ('date','start','end','hours')
+        cols = ('date', 'start', 'end', 'hours')
         self.tree = ttk.Treeview(self.root, columns=cols, show='headings', height=10)
         for c in cols:
             self.tree.heading(c, text=c.title(), command=lambda _c=c: self.sort_tree(_c, False))
@@ -84,13 +85,15 @@ class WorkLoggerApp:
         self.root.after(1000, self.update_clock)
 
     def load_tree(self, cards=None):
-        for i in self.tree.get_children(): self.tree.delete(i)
+        for i in self.tree.get_children():
+            self.tree.delete(i)
         for tc in (cards or fetch_timecards()):
             dt = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')
             dur, hrs = tc.duration_hours()
             tag = 'invalid' if not tc.valid else ('no_desc' if not tc.description else '')
             self.tree.insert('', 'end', iid=str(tc.id),
-                             values=(dt.date(), dt.time(),
+                             values=(dt.date(),
+                                     dt.time(),
                                      datetime.strptime(tc.end_time, '%Y-%m-%d %H:%M:%S').time(),
                                      f"{hrs:.2f}",),
                              tags=(tag,))
@@ -110,59 +113,67 @@ class WorkLoggerApp:
     def sort_tree(self, col, reverse):
         data = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         data.sort(reverse=reverse)
-        for idx, (_, k) in enumerate(data): self.tree.move(k, '', idx)
+        for idx, (_, k) in enumerate(data):
+            self.tree.move(k, '', idx)
         self.tree.heading(col, command=lambda: self.sort_tree(col, not reverse))
 
     def edit_entry(self, event):
         sel = self.tree.selection()
-        if not sel: return
+        if not sel:
+            return
         tc_id = int(sel[0])
         tc = next((t for t in fetch_timecards() if t.id == tc_id), None)
-        if not tc: return
+        if not tc:
+            return
 
         win = tk.Toplevel(self.root)
         win.title("Edit Entry")
         win.configure(bg='#121212')
-        frm = ttk.Frame(win, padding=10); frm.pack(fill='both', expand=True)
+        frm = ttk.Frame(win, padding=10)
+        frm.pack(fill='both', expand=True)
 
-        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e')
+        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e', pady=2)
         start_var = tk.StringVar(value=tc.start_time)
-        ttk.Entry(frm, textvariable=start_var, width=25).grid(row=0, column=1)
+        ttk.Entry(frm, textvariable=start_var, width=25).grid(row=0, column=1, pady=2)
 
-        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e')
+        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e', pady=2)
         end_var = tk.StringVar(value=tc.end_time)
-        ttk.Entry(frm, textvariable=end_var, width=25).grid(row=1, column=1)
+        ttk.Entry(frm, textvariable=end_var, width=25).grid(row=1, column=1, pady=2)
 
         valid_var = tk.BooleanVar(value=tc.valid)
-        ttk.Checkbutton(frm, text="Valid", variable=valid_var).grid(row=2, column=1, sticky='w')
+        ttk.Checkbutton(frm, text="Valid", variable=valid_var).grid(row=2, column=1, sticky='w', pady=2)
 
-        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne')
+        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne', pady=2)
         desc_text = tk.Text(frm, width=40, height=5)
         desc_text.insert('1.0', tc.description)
-        desc_text.grid(row=3, column=1)
+        desc_text.grid(row=3, column=1, pady=2)
 
-        btn_frame = ttk.Frame(win, padding=10); btn_frame.pack()
+        btn_frame = ttk.Frame(win, padding=10)
+        btn_frame.pack()
+
         def save():
-            new_s, new_e = start_var.get(), end_var.get()
+            new_s = start_var.get()
+            new_e = end_var.get()
             try:
                 datetime.strptime(new_s, '%Y-%m-%d %H:%M:%S')
                 datetime.strptime(new_e, '%Y-%m-%d %H:%M:%S')
             except ValueError as ex:
                 messagebox.showerror("Error", f"Invalid date/time: {ex}")
                 return
-            update_timecard(tc_id, new_s, new_e, valid_var.get(), desc_text.get('1.0','end-1c'))
+            update_timecard(tc_id, new_s, new_e, valid_var.get(), desc_text.get('1.0', 'end-1c'))
             self.load_tree()
             messagebox.showinfo("Saved", "Entry updated")
             win.destroy()
 
-        ttk.Button(btn_frame, text="Save",   command=save).pack(side='left', padx=5)
+        ttk.Button(btn_frame, text="Save", command=save).pack(side='left', padx=5)
         ttk.Button(btn_frame, text="Cancel", command=win.destroy).pack(side='left', padx=5)
 
     def start_logging(self):
         self.start_time = datetime.now()
 
     def stop_logging(self):
-        if not self.start_time: return
+        if not self.start_time:
+            return
         end = datetime.now()
         tc = TimeCard(self.start_time.strftime('%Y-%m-%d %H:%M:%S'),
                       end.strftime('%Y-%m-%d %H:%M:%S'))
@@ -171,30 +182,76 @@ class WorkLoggerApp:
         self.start_time = None
 
     def add_entry(self):
-        s = simpledialog.askstring("Start", "YYYY-MM-DD HH:MM:SS")
-        e = simpledialog.askstring("End",   "YYYY-MM-DD HH:MM:SS")
-        if not s or not e: return
-        try:
-            datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
-            datetime.strptime(e, '%Y-%m-%d %H:%M:%S')
-        except ValueError as ex:
-            messagebox.showerror("Error", str(ex))
-            return
-        log_timecard(TimeCard(s, e))
-        self.load_tree()
+        # launch the Add Entry form
+        AddEntryWindow(self)
 
     def update_earned(self):
         total = sum(tc.duration_hours()[1] for tc in fetch_timecards() if tc.valid)
         gross = total * self.rate_per_hour
         net = gross * 0.80
         self.gross_lbl.config(text=f"Gross: ${gross:.2f}")
-        self.net_lbl.config(text=f"Net (–20%): ${net:.2f}")
+        self.net_lbl.config(text=f"Net: ${net:.2f}")
 
     def on_closing(self):
         if self.start_time:
             messagebox.showwarning("Warning", "Stop logging first.")
             return
         self.root.destroy()
+
+
+class AddEntryWindow:
+    def __init__(self, app: WorkLoggerApp):
+        self.app = app
+        self.win = tk.Toplevel(app.root)
+        self.win.title("Add Entry")
+        self.win.configure(bg='#121212')
+        frm = ttk.Frame(self.win, padding=10)
+        frm.pack(fill='both', expand=True)
+
+        # Start time
+        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e', pady=2)
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.start_var = tk.StringVar(value=now_str)
+        ttk.Entry(frm, textvariable=self.start_var, width=25).grid(row=0, column=1, pady=2)
+
+        # End time
+        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e', pady=2)
+        self.end_var = tk.StringVar(value=now_str)
+        ttk.Entry(frm, textvariable=self.end_var, width=25).grid(row=1, column=1, pady=2)
+
+        # Valid checkbox
+        self.valid_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(frm, text="Valid", variable=self.valid_var).grid(row=2, column=1, sticky='w', pady=2)
+
+        # Description
+        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne', pady=2)
+        self.desc_text = tk.Text(frm, width=40, height=5)
+        self.desc_text.grid(row=3, column=1, pady=2)
+
+        # Buttons
+        btn_frame = ttk.Frame(self.win, padding=10)
+        btn_frame.pack()
+        ttk.Button(btn_frame, text="Save", command=self.save).pack(side='left', padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=self.win.destroy).pack(side='left', padx=5)
+
+    def save(self):
+        s = self.start_var.get().strip()
+        e = self.end_var.get().strip()
+        try:
+            datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+            datetime.strptime(e, '%Y-%m-%d %H:%M:%S')
+        except ValueError as ex:
+            messagebox.showerror("Error", f"Invalid date/time: {ex}")
+            return
+
+        tc = TimeCard(s, e,
+                      valid=self.valid_var.get(),
+                      description=self.desc_text.get('1.0', 'end-1c'))
+        log_timecard(tc)
+        self.app.load_tree()
+        messagebox.showinfo("Added", "New entry saved")
+        self.win.destroy()
+
 
 if __name__ == "__main__":
     root = tk.Tk()

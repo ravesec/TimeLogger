@@ -1,16 +1,15 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
 from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, WINDOW_TITLE, THEME
 from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG
-
+from reporting import export_to_csv, generate_pdf_report
 
 # ensure DB is ready
 init_db()
-
 
 class WorkLoggerApp:
     def __init__(self, root):
@@ -71,9 +70,13 @@ class WorkLoggerApp:
     def build_buttons(self):
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
-        for txt, cmd in [("Clock In", self.start_logging),
-                         ("Clock Out", self.stop_logging),
-                         ("Add Entry", self.add_entry)]:
+        for txt, cmd in [
+            ("Clock In",   self.start_logging),
+            ("Clock Out",  self.stop_logging),
+            ("Add Entry",  self.add_entry),
+            ("Export CSV", self.export_csv),
+            ("PDF Report", self.export_pdf_report),
+        ]:
             ttk.Button(frm, text=txt, command=cmd).pack(side='left', padx=10)
 
     def update_clock(self):
@@ -88,9 +91,11 @@ class WorkLoggerApp:
         self.root.after(1000, self.update_clock)
 
     def load_tree(self, cards=None):
+        # remember current cards for export/report
+        self.current_cards = cards or fetch_timecards()
         for i in self.tree.get_children():
             self.tree.delete(i)
-        for tc in (cards or fetch_timecards()):
+        for tc in self.current_cards:
             dt = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')
             dur, hrs = tc.duration_hours()
             tag = 'invalid' if not tc.valid else ('no_desc' if not tc.description else '')
@@ -168,7 +173,7 @@ class WorkLoggerApp:
             messagebox.showinfo("Saved", "Entry updated")
             win.destroy()
 
-        ttk.Button(btn_frame, text="Save", command=save).pack(side='left', padx=5)
+        ttk.Button(btn_frame, text="Save",   command=save).pack(side='left', padx=5)
         ttk.Button(btn_frame, text="Cancel", command=win.destroy).pack(side='left', padx=5)
 
     def start_logging(self):
@@ -185,8 +190,29 @@ class WorkLoggerApp:
         self.start_time = None
 
     def add_entry(self):
-        # launch the Add Entry form
         AddEntryWindow(self)
+
+    def export_csv(self):
+        path = filedialog.asksaveasfilename(
+            defaultextension='.csv',
+            filetypes=[('CSV Files', '*.csv')],
+            title='Save CSV Export'
+        )
+        if not path:
+            return
+        export_to_csv(path, self.current_cards)
+        messagebox.showinfo("Export Complete", f"CSV exported to:\n{path}")
+
+    def export_pdf_report(self):
+        path = filedialog.asksaveasfilename(
+            defaultextension='.pdf',
+            filetypes=[('PDF Files', '*.pdf')],
+            title='Save PDF Report'
+        )
+        if not path:
+            return
+        generate_pdf_report(path, self.current_cards)
+        messagebox.showinfo("Report Complete", f"PDF report saved to:\n{path}")
 
     def update_earned(self):
         total = sum(tc.duration_hours()[1] for tc in fetch_timecards() if tc.valid)

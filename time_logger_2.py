@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
-from tkcalendar import DateEntry
 from datetime import datetime
 import pandas as pd
 from openpyxl.styles import Font
+import calendar
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, NET_RATE, WINDOW_TITLE, THEME
@@ -21,7 +21,7 @@ class WorkLoggerApp:
         self.root.configure(bg=BG_COLOR)
 
         # Hard‑code these to whatever fits your content:
-        self.root.geometry("480x380")
+        self.root.geometry("520x380")
         self.root.resizable(False, False)
 
         style = ttk.Style(root)
@@ -63,7 +63,11 @@ class WorkLoggerApp:
         self.build_tree()
         self.build_buttons()
 
-        self.load_tree()
+        # 1) set selections to current month/year
+        self.clear_filter()
+        # 2) then load that view
+        self.apply_filter()
+
         self.update_clock()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -82,14 +86,26 @@ class WorkLoggerApp:
     def build_filter_frame(self):
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
-        tk.Label(frm, text="From:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
-        self.from_date = DateEntry(frm, width=12, background=CAL_BG, foreground=CAL_FG)
-        self.from_date.pack(side='left', padx=5)
-        tk.Label(frm, text="To:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
-        self.to_date = DateEntry(frm, width=12, background=CAL_BG, foreground=CAL_FG)
-        self.to_date.pack(side='left', padx=5)
+
+        # Month selector
+        tk.Label(frm, text="Month:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
+        months = [calendar.month_name[i] for i in range(1, 13)]
+        self.month_cb = ttk.Combobox(frm, values=months, state='readonly', width=10)
+        self.month_cb.pack(side='left', padx=5)
+
+        # Year selector
+        tk.Label(frm, text="Year:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
+        current_year = datetime.now().year
+        years = list(range(current_year - 5, current_year + 1))
+        self.year_cb = ttk.Combobox(frm, values=years, state='readonly', width=5)
+        self.year_cb.pack(side='left', padx=5)
+
+        # Filter / Clear
         ttk.Button(frm, text="Filter", command=self.apply_filter).pack(side='left', padx=10)
-        ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left')
+        ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left', padx=5)
+
+        # # initialize to current month/year
+        # self.clear_filter()
 
     def build_tree(self):
         cols = ('date', 'start time', 'end time', 'hours earned')
@@ -173,7 +189,7 @@ class WorkLoggerApp:
         # Export CSV
         ttk.Button(
             frm,
-            text="Export CSV",
+            text="Export DB as CSV",
             command=self.export_csv,
             style="Accent.TButton",
             takefocus=False
@@ -201,31 +217,47 @@ class WorkLoggerApp:
 
     def load_tree(self, cards=None):
         # remember current cards for export/report
-        self.current_cards = cards or fetch_timecards()
+        # if cards is None => load everything, otherwise use exactly what was passed
+        self.current_cards = fetch_timecards() if cards is None else cards
+
         for i in self.tree.get_children():
             self.tree.delete(i)
         for tc in self.current_cards:
             dt = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')
             dur, hrs = tc.duration_hours()
             tag = 'invalid' if not tc.valid else ('no_desc' if not tc.description else '')
-            self.tree.insert('', 'end', iid=str(tc.id),
-                             values=(dt.date(),
-                                     dt.time(),
-                                     datetime.strptime(tc.end_time, '%Y-%m-%d %H:%M:%S').time(),
-                                     f"{hrs:.2f}",),
-                             tags=(tag,))
+            self.tree.insert(
+                '', 'end', iid=str(tc.id),
+                values=(
+                    dt.date(),
+                    dt.time(),
+                    datetime.strptime(tc.end_time, '%Y-%m-%d %H:%M:%S').time(),
+                    f"{hrs:.2f}"
+                ),
+                tags=(tag,)
+            )
 
     def apply_filter(self):
-        frm, to = self.from_date.get_date(), self.to_date.get_date()
-        filtered = [tc for tc in fetch_timecards()
-                    if frm <= datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S').date() <= to]
+        # figure out month & year
+        try:
+            m = list(calendar.month_name).index(self.month_cb.get())
+            y = int(self.year_cb.get())
+        except ValueError:
+            return
+
+        # filter only entries in that month/year
+        filtered = [
+            tc for tc in fetch_timecards()
+            if (dt := datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')).year == y
+               and dt.month == m
+        ]
         self.load_tree(filtered)
 
     def clear_filter(self):
-        today = datetime.now()
-        self.from_date.set_date(today)
-        self.to_date.set_date(today)
-        self.load_tree()
+        now = datetime.now()
+        # reset comboboxes to this month/year, but do NOT reload yet
+        self.month_cb.set(calendar.month_name[now.month])
+        self.year_cb.set(str(now.year))
 
     def sort_tree(self, col, reverse):
         data = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]

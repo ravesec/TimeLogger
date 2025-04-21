@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, filedialog
 from tkcalendar import DateEntry
-from datetime import datetime, timedelta
+from datetime import datetime
+import pandas as pd
+from openpyxl.styles import Font
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, NET_RATE, WINDOW_TITLE, THEME
@@ -309,8 +311,50 @@ class WorkLoggerApp:
             self.clock_btn.config(text="Clock In")
 
     def generate_xlsx(self):
-        # TODO: implement XLSX export
-        messagebox.showinfo("Generate XLSX", "This feature isn’t implemented yet.")
+        # Ask where to save
+        path = filedialog.asksaveasfilename(
+            defaultextension='.xlsx',
+            filetypes=[('Excel Files', '*.xlsx')],
+            title='Save XLSX Report'
+        )
+        if not path:
+            return
+
+        # Take the currently displayed cards (or all, if none)
+        raw = self.current_cards or fetch_timecards()
+        # Only valid entries
+        cards = [tc for tc in raw if tc.valid]
+
+        # Aggregate hours per date
+        daily = {}
+        for tc in cards:
+            date = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S').date()
+            _, hrs = tc.duration_hours()
+            daily[date] = daily.get(date, 0) + hrs
+
+        # Build a DataFrame
+        df = pd.DataFrame([
+            {'Date': d.strftime('%Y-%m-%d'), 'Hours': round(daily[d], 2)}
+            for d in sorted(daily)
+        ])
+
+        # Write to Excel with basic styling
+        with pd.ExcelWriter(path, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Summary')
+            workbook = writer.book
+            worksheet = writer.sheets['Summary']
+
+            # Bold the header row
+            header_font = Font(bold=True)
+            for cell in worksheet[1]:
+                cell.font = header_font
+
+            # Auto‑size columns
+            for col in worksheet.columns:
+                max_length = max(len(str(c.value)) for c in col)
+                worksheet.column_dimensions[col[0].column_letter].width = max_length + 2
+
+        messagebox.showinfo("Export Complete", f"XLSX report saved to:\n{path}")
 
     def add_entry(self):
         AddEntryWindow(self)

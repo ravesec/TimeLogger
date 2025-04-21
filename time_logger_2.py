@@ -4,7 +4,7 @@ from tkcalendar import DateEntry
 from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
-from config import RATE_PER_HOUR, WINDOW_TITLE, THEME
+from config import RATE_PER_HOUR, NET_RATE, WINDOW_TITLE, THEME
 from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG, TREE_BG, BUTTON_COLOR
 from reporting import export_to_csv, generate_pdf_report
 
@@ -340,7 +340,7 @@ class WorkLoggerApp:
     def update_earned(self):
         total = sum(tc.duration_hours()[1] for tc in fetch_timecards() if tc.valid)
         gross = total * self.rate_per_hour
-        net = gross * 0.80
+        net = gross * NET_RATE
         self.gross_lbl.config(text=f"Gross: ${gross:.2f}")
         self.net_lbl.config(text=f"Net: ${net:.2f}")
 

@@ -9,6 +9,7 @@ CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 # default settings
 defaults = {
     "rate_per_hour": 20.0,
+    "net_rate": 0.80,  # 80% by default
     "db_path": os.path.join(CONFIG_DIR, "timelog.db"),
     "window_title": "WorkLogger 2.0",
     "theme": "clam",
@@ -49,6 +50,7 @@ CONFIG = load_config()
 
 # expose top‑level constants
 RATE_PER_HOUR = CONFIG['rate_per_hour']
+NET_RATE = CONFIG.get('net_rate', defaults['net_rate'])
 DB_PATH = CONFIG['db_path']
 WINDOW_TITLE = CONFIG['window_title']
 THEME = CONFIG['theme']

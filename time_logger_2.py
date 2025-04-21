@@ -21,7 +21,7 @@ class WorkLoggerApp:
         self.root.configure(bg=BG_COLOR)
 
         # Hard‑code these to whatever fits your content:
-        self.root.geometry("520x380")
+        self.root.geometry("530x380")
         self.root.resizable(False, False)
 
         style = ttk.Style(root)
@@ -208,10 +208,15 @@ class WorkLoggerApp:
         now = datetime.now()
         self.time_lbl.config(text=now.strftime('%H:%M:%S %b %d, %Y'))
         if self.start_time:
+            # compute elapsed hours, minutes, seconds
             elapsed = now - self.start_time
-            self.elapsed_lbl.config(text=f"Elapsed: {str(elapsed).split('.')[0]}")
+            total_seconds = int(elapsed.total_seconds())
+            hrs, rem = divmod(total_seconds, 3600)
+            mins, secs = divmod(rem, 60)
+            elapsed_str = f"{hrs:02}:{mins:02}:{secs:02}"
+            self.elapsed_lbl.config(text=f"Elapsed Time: {elapsed_str} (Logging)")
         else:
-            self.elapsed_lbl.config(text="Elapsed: 00:00:00")
+            self.elapsed_lbl.config(text="Elapsed Time: 00:00:00 (Not Logging)")
         self.update_earned()
         self.root.after(1000, self.update_clock)
 

@@ -4,7 +4,7 @@ from tkcalendar import DateEntry
 from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
-from config import RATE_PER_HOUR, DB_PATH, WINDOW_TITLE, THEME
+from config import RATE_PER_HOUR, WINDOW_TITLE, THEME
 from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG
 
 

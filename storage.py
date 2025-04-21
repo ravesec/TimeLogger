@@ -20,12 +20,6 @@ class TimeCard:
         return delta, delta.total_seconds() / 3600
 
 
-# --- STORAGE SETUP ---
-TMP_DIR = os.path.join(os.path.expanduser("~"), "WorkLogger")
-if not os.path.exists(TMP_DIR):
-    os.makedirs(TMP_DIR)
-
-
 def init_db():
     """Ensure the timecards table exists."""
     conn = sqlite3.connect(DB_PATH)

@@ -246,19 +246,22 @@ class WorkLoggerApp:
             )
 
     def apply_filter(self):
-        # figure out month & year
+        # figure out selected month & year
         try:
             m = list(calendar.month_name).index(self.month_cb.get())
             y = int(self.year_cb.get())
         except ValueError:
             return
 
-        # filter only entries in that month/year
-        filtered = [
-            tc for tc in fetch_timecards()
-            if (dt := datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')).year == y
-               and dt.month == m
-        ]
+        # include cards whose start OR end is in that month/year
+        filtered = []
+        for tc in fetch_timecards():
+            dt_start = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S')
+            dt_end = datetime.strptime(tc.end_time, '%Y-%m-%d %H:%M:%S')
+            if (dt_start.year == y and dt_start.month == m) or \
+                    (dt_end.year == y and dt_end.month == m):
+                filtered.append(tc)
+
         self.load_tree(filtered)
 
     def clear_filter(self):
@@ -439,7 +442,9 @@ class WorkLoggerApp:
         messagebox.showinfo("Report Complete", f"PDF report saved to:\n{path}")
 
     def update_earned(self):
-        total = sum(tc.duration_hours()[1] for tc in fetch_timecards() if tc.valid)
+        # use the filtered cards if present, otherwise fall back to all
+        cards = getattr(self, 'current_cards', None) or fetch_timecards()
+        total = sum(tc.duration_hours()[1] for tc in cards if tc.valid)
         gross = total * self.rate_per_hour
         net = gross * NET_RATE
         self.gross_lbl.config(text=f"Gross: ${gross:.2f}")

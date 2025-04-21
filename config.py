@@ -13,12 +13,14 @@ defaults = {
     "window_title": "WorkLogger 2.0",
     "theme": "clam",
     "ui": {
-        "bg_color": "#121212",
-        "fg_color": "#f2e7fe",
-        "invalid_color": "gray",
-        "no_desc_color": "#ff0000",
-        "cal_bg": "#1d1d1d",
-        "cal_fg": "#f2e7fe"
+        "bg_color": "#121212",  # main background
+        "fg_color": "#f2e7fe",  # main text
+        "invalid_color": "grey",  # invalid entry
+        "no_desc_color": "#cf6679",  # no‑desc entry
+        "tree_bg": "#1d1d1d",  # TreeView background
+        "button_color": "#03dac5",  # button fill
+        "cal_bg": "#1d1d1d",  # calendar bg (unchanged)
+        "cal_fg": "#f2e7fe"  # calendar fg (unchanged)
     }
 }
 
@@ -57,3 +59,5 @@ INVALID_COLOR = CONFIG['ui']['invalid_color']
 NO_DESC_COLOR = CONFIG['ui']['no_desc_color']
 CAL_BG = CONFIG['ui']['cal_bg']
 CAL_FG = CONFIG['ui']['cal_fg']
+TREE_BG = CONFIG['ui']['tree_bg']
+BUTTON_COLOR = CONFIG['ui']['button_color']

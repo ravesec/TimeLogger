@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, WINDOW_TITLE, THEME
-from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG
+from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG, TREE_BG, BUTTON_COLOR
 from reporting import export_to_csv, generate_pdf_report
 
 # ensure DB is ready
@@ -19,8 +19,38 @@ class WorkLoggerApp:
         self.root.configure(bg=BG_COLOR)
 
         # Hard‑code these to whatever fits your content:
-        self.root.geometry("525x380")
+        self.root.geometry("480x380")
         self.root.resizable(False, False)
+
+        style = ttk.Style(root)
+        # TreeView style
+        style.configure("Custom.Treeview",
+                        background=TREE_BG,
+                        fieldbackground=TREE_BG,
+                        foreground=FG_COLOR,
+                        bordercolor=TREE_BG,  # same as bg
+                        borderwidth=0)
+        style.layout("Custom.Treeview", [
+            ('Treeview.treearea', {'sticky': 'nswe'})  # drop all other elements
+        ])
+        style.configure("Custom.Treeview.Heading",
+                        background=TREE_BG,
+                        foreground=FG_COLOR,
+                        borderwidth=0,
+                        relief='flat')
+        style.map("Custom.Treeview.Heading",
+                  relief=[('active', 'flat'), ('!active', 'flat')])
+        # Button style
+        style.configure("Accent.TButton",
+                        background=BUTTON_COLOR,
+                        foreground=BG_COLOR,
+                        borderwidth=0,  # no border
+                        focusthickness=0,  # no focus ring
+                        highlightthickness=0,  # no highlight
+                        relief='flat')
+        style.map("Accent.TButton",
+                  relief=[('pressed', 'flat'), ('!pressed', 'flat')],
+                  background=[('active', BUTTON_COLOR)])
 
         self.root.attributes("-topmost", True)
         self.rate_per_hour = RATE_PER_HOUR
@@ -61,13 +91,16 @@ class WorkLoggerApp:
 
     def build_tree(self):
         cols = ('date', 'start', 'end', 'hours')
-        self.tree = ttk.Treeview(self.root, columns=cols, show='headings')
+        self.tree = ttk.Treeview(self.root,
+                                 columns=cols,
+                                 show='headings',
+                                 style="Custom.Treeview")
         for c in cols:
             # make each column stretch to fill available space
             self.tree.heading(c, text=c.title(), command=lambda _c=c: self.sort_tree(_c, False))
             self.tree.column(c, anchor='center', stretch=True)
 
-        self.tree.pack(fill='both', expand=True, padx=10)
+        self.tree.pack(fill='both', expand=True, pady=5)
 
         # bind mousewheel / touchpad scroll
         self.tree.bind("<MouseWheel>", self._on_mousewheel)  # Windows / macOS
@@ -113,7 +146,14 @@ class WorkLoggerApp:
             ("Export CSV", self.export_csv),
             ("PDF Report", self.export_pdf_report),
         ]:
-            ttk.Button(frm, text=txt, command=cmd).pack(side='left', padx=10)
+            ttk.Button(frm,
+                       text=txt,
+                       command=cmd,
+                       style="Accent.TButton"
+                       ).pack(side='left',
+                              padx=10,
+                              pady=(0, 5)  # ← adds 5px padding below each button
+                              )
 
     def update_clock(self):
         now = datetime.now()
@@ -173,6 +213,10 @@ class WorkLoggerApp:
         win = tk.Toplevel(self.root)
         win.title("Edit Entry")
         win.configure(bg=BG_COLOR)
+
+        win.attributes("-topmost", True)  # keep this window on top
+        win.resizable(True, True)
+
         frm = ttk.Frame(win, padding=10)
         frm.pack(fill='both', expand=True)
 

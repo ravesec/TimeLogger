@@ -4,6 +4,9 @@ from tkcalendar import DateEntry
 from datetime import datetime, timedelta
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
+from config import RATE_PER_HOUR, DB_PATH, WINDOW_TITLE, THEME
+from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG
+
 
 # ensure DB is ready
 init_db()
@@ -12,10 +15,10 @@ init_db()
 class WorkLoggerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("WorkLogger 2.0")
-        self.root.configure(bg='#121212')
+        self.root.title(WINDOW_TITLE)
+        self.root.configure(bg=BG_COLOR)
         self.root.attributes("-topmost", True)
-        self.rate_per_hour = 20.0
+        self.rate_per_hour = RATE_PER_HOUR
         self.start_time = None
 
         self.build_header()
@@ -28,25 +31,25 @@ class WorkLoggerApp:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def build_header(self):
-        hdr = tk.Frame(self.root, bg='#121212')
+        hdr = tk.Frame(self.root, bg=BG_COLOR)
         hdr.pack(fill='x', pady=5)
-        self.time_lbl = tk.Label(hdr, bg='#121212', fg='#f2e7fe')
+        self.time_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.time_lbl.pack(side='left', padx=10)
-        self.elapsed_lbl = tk.Label(hdr, bg='#121212', fg='#f2e7fe')
+        self.elapsed_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.elapsed_lbl.pack(side='left', padx=10)
-        self.gross_lbl = tk.Label(hdr, bg='#121212', fg='#f2e7fe')
+        self.gross_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.gross_lbl.pack(side='right', padx=10)
-        self.net_lbl = tk.Label(hdr, bg='#121212', fg='#f2e7fe')
+        self.net_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.net_lbl.pack(side='right', padx=10)
 
     def build_filter_frame(self):
-        frm = tk.Frame(self.root, bg='#121212')
+        frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
-        tk.Label(frm, text="From:", bg='#121212', fg='#f2e7fe').pack(side='left', padx=5)
-        self.from_date = DateEntry(frm, width=12, background='#1d1d1d', foreground='#f2e7fe')
+        tk.Label(frm, text="From:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
+        self.from_date = DateEntry(frm, width=12, background=CAL_BG, foreground=CAL_FG)
         self.from_date.pack(side='left', padx=5)
-        tk.Label(frm, text="To:", bg='#121212', fg='#f2e7fe').pack(side='left', padx=5)
-        self.to_date = DateEntry(frm, width=12, background='#1d1d1d', foreground='#f2e7fe')
+        tk.Label(frm, text="To:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
+        self.to_date = DateEntry(frm, width=12, background=CAL_BG, foreground=CAL_FG)
         self.to_date.pack(side='left', padx=5)
         ttk.Button(frm, text="Filter", command=self.apply_filter).pack(side='left', padx=10)
         ttk.Button(frm, text="Clear", command=self.clear_filter).pack(side='left')
@@ -62,11 +65,11 @@ class WorkLoggerApp:
         vsb.pack(side='right', fill='y')
         self.tree.pack(fill='both', expand=True, padx=10)
         self.tree.bind('<Double-1>', self.edit_entry)
-        self.tree.tag_configure('invalid', foreground='gray')
-        self.tree.tag_configure('no_desc', foreground='#ff0000')
+        self.tree.tag_configure('invalid', foreground=INVALID_COLOR)
+        self.tree.tag_configure('no_desc', foreground=NO_DESC_COLOR)
 
     def build_buttons(self):
-        frm = tk.Frame(self.root, bg='#121212')
+        frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
         for txt, cmd in [("Clock In", self.start_logging),
                          ("Clock Out", self.stop_logging),
@@ -128,7 +131,7 @@ class WorkLoggerApp:
 
         win = tk.Toplevel(self.root)
         win.title("Edit Entry")
-        win.configure(bg='#121212')
+        win.configure(bg=BG_COLOR)
         frm = ttk.Frame(win, padding=10)
         frm.pack(fill='both', expand=True)
 
@@ -204,7 +207,7 @@ class AddEntryWindow:
         self.app = app
         self.win = tk.Toplevel(app.root)
         self.win.title("Add Entry")
-        self.win.configure(bg='#121212')
+        self.win.configure(bg=BG_COLOR)
         frm = ttk.Frame(self.win, padding=10)
         frm.pack(fill='both', expand=True)
 
@@ -256,6 +259,6 @@ class AddEntryWindow:
 if __name__ == "__main__":
     root = tk.Tk()
     style = ttk.Style(root)
-    style.theme_use('clam')
+    style.theme_use(THEME)
     app = WorkLoggerApp(root)
     root.mainloop()

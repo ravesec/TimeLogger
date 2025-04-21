@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
+from config import DB_PATH
 
 
 # --- MODEL ---
@@ -23,7 +24,6 @@ class TimeCard:
 TMP_DIR = os.path.join(os.path.expanduser("~"), "WorkLogger")
 if not os.path.exists(TMP_DIR):
     os.makedirs(TMP_DIR)
-DB_PATH = os.path.join(TMP_DIR, "timelog.db")
 
 
 def init_db():

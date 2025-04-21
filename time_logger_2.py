@@ -11,11 +11,17 @@ from reporting import export_to_csv, generate_pdf_report
 # ensure DB is ready
 init_db()
 
+
 class WorkLoggerApp:
     def __init__(self, root):
         self.root = root
         self.root.title(WINDOW_TITLE)
         self.root.configure(bg=BG_COLOR)
+
+        # Hard‑code these to whatever fits your content:
+        self.root.geometry("525x380")
+        self.root.resizable(False, False)
+
         self.root.attributes("-topmost", True)
         self.rate_per_hour = RATE_PER_HOUR
         self.start_time = None
@@ -55,25 +61,55 @@ class WorkLoggerApp:
 
     def build_tree(self):
         cols = ('date', 'start', 'end', 'hours')
-        self.tree = ttk.Treeview(self.root, columns=cols, show='headings', height=10)
+        self.tree = ttk.Treeview(self.root, columns=cols, show='headings')
         for c in cols:
+            # make each column stretch to fill available space
             self.tree.heading(c, text=c.title(), command=lambda _c=c: self.sort_tree(_c, False))
-            self.tree.column(c, anchor='center')
-        vsb = ttk.Scrollbar(self.root, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=vsb.set)
-        vsb.pack(side='right', fill='y')
+            self.tree.column(c, anchor='center', stretch=True)
+
         self.tree.pack(fill='both', expand=True, padx=10)
+
+        # bind mousewheel / touchpad scroll
+        self.tree.bind("<MouseWheel>", self._on_mousewheel)  # Windows / macOS
+        self.tree.bind("<Button-4>", self._on_mousewheel)  # Linux scroll up
+        self.tree.bind("<Button-5>", self._on_mousewheel)  # Linux scroll down
+
+        # whenever the treeview is resized, redistribute column widths
+        self.tree.bind('<Configure>', self._on_tree_resize)
+
         self.tree.bind('<Double-1>', self.edit_entry)
         self.tree.tag_configure('invalid', foreground=INVALID_COLOR)
         self.tree.tag_configure('no_desc', foreground=NO_DESC_COLOR)
+
+    def _on_mousewheel(self, event):
+        # Windows and macOS: event.delta is positive on scroll up, negative on scroll down
+        if hasattr(event, 'delta') and event.delta:
+            # delta is a multiple of 120 on Windows
+            direction = -1 if event.delta > 0 else 1
+        else:
+            # Linux: Button-4 = up, Button-5 = down
+            direction = -1 if event.num == 4 else 1
+
+        self.tree.yview_scroll(direction, "units")
+
+    def _on_tree_resize(self, event):
+        # total width available for all columns
+        total_width = event.width
+        cols = self.tree["columns"]
+        if not cols:
+            return
+        # divide equally
+        width_per_col = total_width // len(cols)
+        for c in cols:
+            self.tree.column(c, width=width_per_col)
 
     def build_buttons(self):
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
         for txt, cmd in [
-            ("Clock In",   self.start_logging),
-            ("Clock Out",  self.stop_logging),
-            ("Add Entry",  self.add_entry),
+            ("Clock In", self.start_logging),
+            ("Clock Out", self.stop_logging),
+            ("Add Entry", self.add_entry),
             ("Export CSV", self.export_csv),
             ("PDF Report", self.export_pdf_report),
         ]:
@@ -173,7 +209,7 @@ class WorkLoggerApp:
             messagebox.showinfo("Saved", "Entry updated")
             win.destroy()
 
-        ttk.Button(btn_frame, text="Save",   command=save).pack(side='left', padx=5)
+        ttk.Button(btn_frame, text="Save", command=save).pack(side='left', padx=5)
         ttk.Button(btn_frame, text="Cancel", command=win.destroy).pack(side='left', padx=5)
 
     def start_logging(self):

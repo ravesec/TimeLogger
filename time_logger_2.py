@@ -200,7 +200,7 @@ class WorkLoggerApp:
         )
         if not path:
             return
-        export_to_csv(path, self.current_cards)
+        export_to_csv(path)
         messagebox.showinfo("Export Complete", f"CSV exported to:\n{path}")
 
     def export_pdf_report(self):

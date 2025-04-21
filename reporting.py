@@ -5,36 +5,25 @@ import matplotlib.pyplot as plt
 from storage import fetch_timecards
 
 
-def export_to_csv(filepath, cards=None):
+def export_to_csv(filepath):
     """
-    Export one row per day, ignoring invalid entries:
-      Date (MM/DD/YYYY), blank column, combined Descriptions, total Hours.
+    Dump the entire timecards list to CSV:
+      id, start_time, end_time, valid, description
     """
-    # fetch if not provided, then drop invalid
-    raw = cards or fetch_timecards()
-    cards = [tc for tc in raw if tc.valid]
+    cards = fetch_timecards()
 
-    # Aggregate by date
-    daily = {}
-    for tc in cards:
-        date = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S').date()
-        desc = tc.description.strip()
-        _, hrs = tc.duration_hours()
-        if date not in daily:
-            daily[date] = {'descs': [], 'hours': 0.0}
-        if desc:
-            daily[date]['descs'].append(desc)
-        daily[date]['hours'] += hrs
-
-    # Write CSV
     with open(filepath, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['Date', '', 'Description', 'Hours'])
-        for date in sorted(daily):
-            date_str = date.strftime('%m/%d/%Y')
-            combined_desc = ' | '.join(daily[date]['descs'])
-            hours_str = f"{daily[date]['hours']:.2f}"
-            writer.writerow([date_str, '', combined_desc, hours_str])
+        # header matches table columns
+        writer.writerow(['id', 'start_time', 'end_time', 'valid', 'description'])
+        for tc in cards:
+            writer.writerow([
+                tc.id,
+                tc.start_time,
+                tc.end_time,
+                int(tc.valid),
+                tc.description
+            ])
 
 
 def generate_pdf_report(filepath, cards=None):

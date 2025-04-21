@@ -266,6 +266,7 @@ class WorkLoggerApp:
         # reset comboboxes to this month/year, but do NOT reload yet
         self.month_cb.set(calendar.month_name[now.month])
         self.year_cb.set(str(now.year))
+        self.apply_filter()
 
     def sort_tree(self, col, reverse):
         data = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]

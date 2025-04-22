@@ -489,13 +489,18 @@ class WorkLoggerApp:
         messagebox.showinfo("Report Complete", f"PDF report saved to:\n{path}")
 
     def update_earned(self):
-        # use the filtered cards if present, otherwise fall back to all
-        cards = getattr(self, 'current_cards', None) or fetch_timecards()
+        # Always use the filtered view (even if it's empty),
+        # only default to all cards if attribute isn't set yet.
+        cards = getattr(self, 'current_cards', [])
+        if cards is None:
+            cards = fetch_timecards()
+
         total = sum(tc.duration_hours()[1] for tc in cards if tc.valid)
         gross = total * self.rate_per_hour
         net = gross * NET_RATE
+
         self.gross_lbl.config(text=f"Gross: ${gross:.2f}")
-        self.net_lbl.config(text=f"Net: ${net:.2f}")
+        self.net_lbl.config(text=f"Net:   ${net:.2f}")
 
     def on_closing(self):
         if self.start_time:

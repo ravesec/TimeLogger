@@ -97,7 +97,7 @@ class WorkLoggerApp:
         # 2. Info button
         self.info_btn = tk.Button(
             hdr,
-            text='ℹ️',
+            text='Info ℹ',
             bg=TREE_BG,
             fg=BUTTON_COLOR,
             bd=0,

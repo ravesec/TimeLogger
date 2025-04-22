@@ -54,6 +54,15 @@ class WorkLoggerApp:
                   relief=[('pressed', 'flat'), ('!pressed', 'flat')],
                   background=[('active', BUTTON_COLOR)])
 
+        # Flat style: no border, no focus ring, flat relief
+        style.configure("Flat.TButton",
+                        borderwidth=0,
+                        focusthickness=0,
+                        highlightthickness=0,
+                        relief='flat')
+        style.map("Flat.TButton",
+                  relief=[('pressed', 'flat'), ('!pressed', 'flat')])
+
         self.root.attributes("-topmost", True)
         self.rate_per_hour = RATE_PER_HOUR
         self.start_time = None
@@ -87,23 +96,29 @@ class WorkLoggerApp:
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
 
-        # Month selector (fixed size)
+        # Month selector
         tk.Label(frm, text="Month:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
         months = [calendar.month_name[i] for i in range(1, 13)]
         self.month_cb = ttk.Combobox(frm, values=months, state='readonly', width=10)
         self.month_cb.pack(side='left', padx=5)
 
-        # Year selector (fixed size)
+        # Year selector
         tk.Label(frm, text="Year:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
-        current_year = datetime.now().year
-        years = list(range(current_year - 5, current_year + 1))
+        years = list(range(datetime.now().year - 5, datetime.now().year + 1))
         self.year_cb = ttk.Combobox(frm, values=years, state='readonly', width=5)
         self.year_cb.pack(side='left', padx=5)
 
-        # Filter / Clear (expand equally)
-        self.filter_btn = ttk.Button(frm, text="Filter", command=self.apply_filter)
+        # Filter / Clear (flat, default color)
+        self.filter_btn = ttk.Button(
+            frm, text="Filter", command=self.apply_filter,
+            style="Flat.TButton", takefocus=False
+        )
         self.filter_btn.pack(side='left', expand=True, fill='x', padx=5)
-        self.clear_btn = ttk.Button(frm, text="Clear", command=self.clear_filter)
+
+        self.clear_btn = ttk.Button(
+            frm, text="Clear", command=self.clear_filter,
+            style="Flat.TButton", takefocus=False
+        )
         self.clear_btn.pack(side='left', expand=True, fill='x', padx=5)
 
     def build_tree(self):

@@ -21,7 +21,7 @@ class WorkLoggerApp:
         self.root.configure(bg=BG_COLOR)
 
         # Hard‑code these to whatever fits your content:
-        self.root.geometry("530x380")
+        self.root.geometry("560x380")
         self.root.resizable(False, False)
 
         style = ttk.Style(root)
@@ -87,25 +87,24 @@ class WorkLoggerApp:
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
 
-        # Month selector
+        # Month selector (fixed size)
         tk.Label(frm, text="Month:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
         months = [calendar.month_name[i] for i in range(1, 13)]
         self.month_cb = ttk.Combobox(frm, values=months, state='readonly', width=10)
         self.month_cb.pack(side='left', padx=5)
 
-        # Year selector
+        # Year selector (fixed size)
         tk.Label(frm, text="Year:", bg=BG_COLOR, fg=FG_COLOR).pack(side='left', padx=5)
         current_year = datetime.now().year
         years = list(range(current_year - 5, current_year + 1))
         self.year_cb = ttk.Combobox(frm, values=years, state='readonly', width=5)
         self.year_cb.pack(side='left', padx=5)
 
-        # Filter / Clear
+        # Filter / Clear (expand equally)
         self.filter_btn = ttk.Button(frm, text="Filter", command=self.apply_filter)
-        self.filter_btn.pack(side='left', padx=10)
+        self.filter_btn.pack(side='left', expand=True, fill='x', padx=5)
         self.clear_btn = ttk.Button(frm, text="Clear", command=self.clear_filter)
-        self.clear_btn.pack(side='left', padx=5)
-
+        self.clear_btn.pack(side='left', expand=True, fill='x', padx=5)
 
     def build_tree(self):
         cols = ('date', 'start time', 'end time', 'hours earned')
@@ -158,54 +157,26 @@ class WorkLoggerApp:
         frm = tk.Frame(self.root, bg=BG_COLOR)
         frm.pack(fill='x', pady=5)
 
-        # Toggle clock button
-        self.clock_btn = ttk.Button(
-            frm,
-            text="Clock In",
-            command=self.toggle_logging,
-            style="Accent.TButton",
-            takefocus=False
-        )
-        self.clock_btn.pack(side='left', padx=10, pady=(0, 5))
+        # Each of these now expands equally and fills horizontally
+        self.clock_btn = ttk.Button(frm, text="Clock In", command=self.toggle_logging,
+                                    style="Accent.TButton", takefocus=False)
+        self.clock_btn.pack(side='left', expand=True, fill='x', padx=5, pady=(0, 5))
 
-        # Generate XLSX stub
-        self.xlsx_btn = ttk.Button(
-            frm,
-            text="Generate XLSX",
-            command=self.generate_xlsx,
-            style="Accent.TButton",
-            takefocus=False
-        )
-        self.xlsx_btn.pack(side='left', padx=10, pady=(0, 5))
+        self.xlsx_btn = ttk.Button(frm, text="Generate XLSX", command=self.generate_xlsx,
+                                   style="Accent.TButton", takefocus=False)
+        self.xlsx_btn.pack(side='left', expand=True, fill='x', padx=5, pady=(0, 5))
 
-        # Add Entry
-        ttk.Button(
-            frm,
-            text="Add Entry",
-            command=self.add_entry,
-            style="Accent.TButton",
-            takefocus=False
-        ).pack(side='left', padx=10, pady=(0, 5))
+        ttk.Button(frm, text="Add Entry", command=self.add_entry,
+                   style="Accent.TButton", takefocus=False) \
+            .pack(side='left', expand=True, fill='x', padx=5, pady=(0, 5))
 
-        # Export CSV
-        self.csv_btn = ttk.Button(
-            frm,
-            text="Export DB as CSV",
-            command=self.export_csv,
-            style="Accent.TButton",
-            takefocus=False
-        )
-        self.csv_btn.pack(side='left', padx=10, pady=(0, 5))
+        self.csv_btn = ttk.Button(frm, text="Export DB as CSV", command=self.export_csv,
+                                  style="Accent.TButton", takefocus=False)
+        self.csv_btn.pack(side='left', expand=True, fill='x', padx=5, pady=(0, 5))
 
-        # PDF Report
-        self.pdf_btn = ttk.Button(
-            frm,
-            text="PDF Report",
-            command=self.export_pdf_report,
-            style="Accent.TButton",
-            takefocus=False
-        )
-        self.pdf_btn.pack(side='left', padx=10, pady=(0, 5))
+        self.pdf_btn = ttk.Button(frm, text="PDF Report", command=self.export_pdf_report,
+                                  style="Accent.TButton", takefocus=False)
+        self.pdf_btn.pack(side='left', expand=True, fill='x', padx=5, pady=(0, 5))
 
     def update_clock(self):
         now = datetime.now()

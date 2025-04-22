@@ -142,7 +142,7 @@ class WorkLoggerApp:
         self.filter_btn.pack(side='left', expand=True, fill='x', padx=5)
 
         self.clear_btn = ttk.Button(
-            frm, text="Clear Filter", command=self.clear_filter,
+            frm, text="Reset Filter", command=self.clear_filter,
             style="Flat.TButton", takefocus=False
         )
         self.clear_btn.pack(side='left', expand=True, fill='x', padx=5)
@@ -543,34 +543,79 @@ class AddEntryWindow:
         self.win = tk.Toplevel(app.root)
         self.win.title("Add Entry")
         self.win.configure(bg=BG_COLOR)
-        frm = ttk.Frame(self.win, padding=10)
+        self.win.transient(app.root)
+        self.win.grab_set()
+        self.win.focus_force()
+
+        # -- use a tk.Frame so we can set bg/fg --
+        frm = tk.Frame(self.win, bg=BG_COLOR, padx=10, pady=10)
         frm.pack(fill='both', expand=True)
 
         # Start time
-        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e', pady=2)
+        tk.Label(frm, text="Start Time:", bg=BG_COLOR, fg=FG_COLOR)\
+            .grid(row=0, column=0, sticky='e', pady=2)
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.start_var = tk.StringVar(value=now_str)
-        ttk.Entry(frm, textvariable=self.start_var, width=25).grid(row=0, column=1, pady=2)
+        tk.Entry(frm, textvariable=self.start_var, width=25,
+                 bg=TREE_BG, fg=FG_COLOR, insertbackground=FG_COLOR,
+                 relief='flat')\
+            .grid(row=0, column=1, pady=2)
 
         # End time
-        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e', pady=2)
+        tk.Label(frm, text="End Time:", bg=BG_COLOR, fg=FG_COLOR)\
+            .grid(row=1, column=0, sticky='e', pady=2)
         self.end_var = tk.StringVar(value=now_str)
-        ttk.Entry(frm, textvariable=self.end_var, width=25).grid(row=1, column=1, pady=2)
+        tk.Entry(frm, textvariable=self.end_var, width=25,
+                 bg=TREE_BG, fg=FG_COLOR, insertbackground=FG_COLOR,
+                 relief='flat')\
+            .grid(row=1, column=1, pady=2)
 
         # Valid checkbox
         self.valid_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(frm, text="Valid", variable=self.valid_var).grid(row=2, column=1, sticky='w', pady=2)
+        tk.Checkbutton(frm, text="Valid", variable=self.valid_var,
+                       bg=BG_COLOR, fg=FG_COLOR,
+                       activebackground=BG_COLOR,
+                       selectcolor=TREE_BG)\
+            .grid(row=2, column=1, sticky='w', pady=2)
 
         # Description
-        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne', pady=2)
-        self.desc_text = tk.Text(frm, width=40, height=5)
+        tk.Label(frm, text="Description:", bg=BG_COLOR, fg=FG_COLOR)\
+            .grid(row=3, column=0, sticky='ne', pady=2)
+        self.desc_text = tk.Text(frm, width=40, height=5,
+                                 bg=TREE_BG, fg=FG_COLOR,
+                                 insertbackground=FG_COLOR,
+                                 relief='flat')
         self.desc_text.grid(row=3, column=1, pady=2)
 
-        # Buttons
-        btn_frame = ttk.Frame(self.win, padding=10)
-        btn_frame.pack()
-        ttk.Button(btn_frame, text="Save", command=self.save).pack(side='left', padx=5)
-        ttk.Button(btn_frame, text="Cancel", command=self.win.destroy).pack(side='left', padx=5)
+        # Buttons (use your Accent style)
+        btn_frame = tk.Frame(self.win, bg=BG_COLOR, pady=10)
+        btn_frame.pack(fill='x', padx=10, pady=(10, 0))  # make the frame stretch
+
+        save_btn = tk.Button(
+            btn_frame,
+            text="Save",
+            command=self.save,
+            bg=BUTTON_COLOR,
+            fg=BG_COLOR,
+            bd=0,
+            highlightthickness=0,
+            relief='flat'
+        )
+        cancel_btn = tk.Button(
+            btn_frame,
+            text="Cancel",
+            command=self.win.destroy,
+            bg=BUTTON_COLOR,
+            fg=BG_COLOR,
+            bd=0,
+            highlightthickness=0,
+            relief='flat'
+        )
+
+        # pack them side-by-side, equally expanding
+        save_btn.pack(side='left', expand=True, fill='x', padx=(0, 5))
+        cancel_btn.pack(side='left', expand=True, fill='x', padx=(5, 0))
+
 
     def save(self):
         s = self.start_var.get().strip()

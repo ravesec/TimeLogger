@@ -302,48 +302,81 @@ class WorkLoggerApp:
         win = tk.Toplevel(self.root)
         win.title("Edit Entry")
         win.configure(bg=BG_COLOR)
-
-        win.attributes("-topmost", True)  # keep this window on top
+        win.attributes("-topmost", True)
         win.resizable(True, True)
 
-        frm = ttk.Frame(win, padding=10)
+        # use a tk.Frame so we can set bg/fg
+        frm = tk.Frame(win, bg=BG_COLOR, padx=10, pady=10)
         frm.pack(fill='both', expand=True)
 
-        ttk.Label(frm, text="Start Time:").grid(row=0, column=0, sticky='e', pady=2)
+        # Start Time
+        tk.Label(frm, text="Start Time:", bg=BG_COLOR, fg=FG_COLOR) \
+            .grid(row=0, column=0, sticky='e', pady=2)
         start_var = tk.StringVar(value=tc.start_time)
-        ttk.Entry(frm, textvariable=start_var, width=25).grid(row=0, column=1, pady=2)
+        tk.Entry(frm, textvariable=start_var, width=25,
+                 bg=TREE_BG, fg=FG_COLOR, insertbackground=FG_COLOR,
+                 relief='flat') \
+            .grid(row=0, column=1, pady=2)
 
-        ttk.Label(frm, text="End Time:").grid(row=1, column=0, sticky='e', pady=2)
+        # End Time
+        tk.Label(frm, text="End Time:", bg=BG_COLOR, fg=FG_COLOR) \
+            .grid(row=1, column=0, sticky='e', pady=2)
         end_var = tk.StringVar(value=tc.end_time)
-        ttk.Entry(frm, textvariable=end_var, width=25).grid(row=1, column=1, pady=2)
+        tk.Entry(frm, textvariable=end_var, width=25,
+                 bg=TREE_BG, fg=FG_COLOR, insertbackground=FG_COLOR,
+                 relief='flat') \
+            .grid(row=1, column=1, pady=2)
 
+        # Valid checkbox
         valid_var = tk.BooleanVar(value=tc.valid)
-        ttk.Checkbutton(frm, text="Valid", variable=valid_var).grid(row=2, column=1, sticky='w', pady=2)
+        tk.Checkbutton(frm, text="Valid", variable=valid_var,
+                       bg=BG_COLOR, fg=FG_COLOR,
+                       activebackground=BG_COLOR,
+                       selectcolor=TREE_BG) \
+            .grid(row=2, column=1, sticky='w', pady=2)
 
-        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky='ne', pady=2)
-        desc_text = tk.Text(frm, width=40, height=5)
+        # Description
+        tk.Label(frm, text="Description:", bg=BG_COLOR, fg=FG_COLOR) \
+            .grid(row=3, column=0, sticky='ne', pady=2)
+        desc_text = tk.Text(frm, width=40, height=5,
+                            bg=TREE_BG, fg=FG_COLOR,
+                            insertbackground=FG_COLOR,
+                            relief='flat')
         desc_text.insert('1.0', tc.description)
         desc_text.grid(row=3, column=1, pady=2)
 
-        btn_frame = ttk.Frame(win, padding=10)
-        btn_frame.pack()
+        # Buttons
+        btn_frame = tk.Frame(win, bg=BG_COLOR, pady=10)
+        btn_frame.pack(fill='x', padx=10)
 
         def save():
-            new_s = start_var.get()
-            new_e = end_var.get()
+            new_s = start_var.get().strip()
+            new_e = end_var.get().strip()
             try:
                 datetime.strptime(new_s, '%Y-%m-%d %H:%M:%S')
                 datetime.strptime(new_e, '%Y-%m-%d %H:%M:%S')
             except ValueError as ex:
                 messagebox.showerror("Error", f"Invalid date/time: {ex}")
                 return
-            update_timecard(tc_id, new_s, new_e, valid_var.get(), desc_text.get('1.0', 'end-1c'))
+            update_timecard(tc_id, new_s, new_e,
+                            valid_var.get(),
+                            desc_text.get('1.0', 'end-1c'))
             self.load_tree()
             messagebox.showinfo("Saved", "Entry updated")
             win.destroy()
 
-        ttk.Button(btn_frame, text="Save", command=save).pack(side='left', padx=5)
-        ttk.Button(btn_frame, text="Cancel", command=win.destroy).pack(side='left', padx=5)
+        save_btn = tk.Button(
+            btn_frame, text="Save", command=save,
+            bg=BUTTON_COLOR, fg=BG_COLOR,
+            bd=0, highlightthickness=0, relief='flat'
+        )
+        cancel_btn = tk.Button(
+            btn_frame, text="Cancel", command=win.destroy,
+            bg=BUTTON_COLOR, fg=BG_COLOR,
+            bd=0, highlightthickness=0, relief='flat'
+        )
+        save_btn.pack(side='left', expand=True, fill='x', padx=(0, 5))
+        cancel_btn.pack(side='left', expand=True, fill='x', padx=(5, 0))
 
     def start_logging(self):
         self.start_time = datetime.now()

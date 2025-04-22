@@ -221,7 +221,7 @@ class WorkLoggerApp:
 
     def update_clock(self):
         now = datetime.now()
-        self.time_lbl.config(text=now.strftime('%H:%M:%S %b %d, %Y'))
+        self.time_lbl.config(text=now.strftime('%b %d, %Y, %H:%M:%S'))
         if self.start_time:
             # compute elapsed hours, minutes, seconds
             elapsed = now - self.start_time

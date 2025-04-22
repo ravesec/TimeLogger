@@ -392,25 +392,81 @@ class WorkLoggerApp:
         if not path:
             return
 
-        # Take the currently displayed cards (or all, if none)
+        # Only valid entries from current view
         raw = self.current_cards or fetch_timecards()
-        # Only valid entries
         cards = [tc for tc in raw if tc.valid]
 
-        # Aggregate hours per date
-        daily = {}
+        # Aggregate hours & descriptions per date
+        daily_hours = {}
+        daily_desc = {}
         for tc in cards:
             date = datetime.strptime(tc.start_time, '%Y-%m-%d %H:%M:%S').date()
             _, hrs = tc.duration_hours()
-            daily[date] = daily.get(date, 0) + hrs
+            daily_hours[date] = daily_hours.get(date, 0) + hrs
+            if tc.description:
+                daily_desc.setdefault(date, []).append(tc.description)
 
-        # Build a DataFrame
-        df = pd.DataFrame([
-            {'Date': d.strftime('%Y-%m-%d'), 'Hours': round(daily[d], 2)}
-            for d in sorted(daily)
-        ])
+        # Determine selected month & year
+        m = list(calendar.month_name).index(self.month_cb.get())
+        y = int(self.year_cb.get())
+        last_day = calendar.monthrange(y, m)[1]
 
-        # Write to Excel with basic styling
+        # Build every day of that month
+        full_days = [datetime(y, m, d).date() for d in range(1, last_day + 1)]
+
+        # Prepare rows with four columns: Date, Payment Method, Description, Hours
+        rows = []
+        for d in full_days:
+            hrs = round(daily_hours.get(d, 0), 2)
+            desc = "; ".join(daily_desc.get(d, []))
+            rows.append({
+                'Date': d.strftime('%Y-%m-%d'),
+                'Payment Method': 'spam@example.com',  # template email
+                'Description': desc,
+                'Hours': hrs
+            })
+
+        # Add the summary block
+        rows.append({
+            'Date': '',
+            'Payment Method': '',
+            'Description': '',
+            'Hours': ''
+        })
+        rows.append({
+            'Date': 'Pay per Hour',
+            'Payment Method': '',
+            'Description': '',
+            'Hours': round(self.rate_per_hour, 2)
+        })
+
+        total_hours = sum(r['Hours'] for r in rows if isinstance(r['Hours'], (int, float)))
+        gross_pay = total_hours * self.rate_per_hour
+        net_pay = gross_pay * NET_RATE
+
+        rows.append({
+            'Date': 'Total Hours',
+            'Payment Method': '',
+            'Description': '',
+            'Hours': round(total_hours, 2)
+        })
+        rows.append({
+            'Date': 'Gross Pay',
+            'Payment Method': '',
+            'Description': '',
+            'Hours': round(gross_pay, 2)
+        })
+        rows.append({
+            'Date': 'Net Pay',
+            'Payment Method': '',
+            'Description': '',
+            'Hours': round(net_pay, 2)
+        })
+
+        # Create DataFrame with correct column order
+        df = pd.DataFrame(rows, columns=['Date', 'Payment Method', 'Description', 'Hours'])
+
+        # Write to Excel
         with pd.ExcelWriter(path, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Summary')
             workbook = writer.book

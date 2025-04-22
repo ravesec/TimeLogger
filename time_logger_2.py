@@ -7,7 +7,7 @@ import calendar
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, NET_RATE, WINDOW_TITLE, THEME
-from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, CAL_BG, CAL_FG, TREE_BG, BUTTON_COLOR
+from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, TREE_BG, BUTTON_COLOR, CONFIG_DIR
 from reporting import export_to_csv, generate_pdf_report
 
 # ensure DB is ready
@@ -474,9 +474,10 @@ class WorkLoggerApp:
         # NET_RATE is the fraction (e.g. 0.80)
         pct = int(NET_RATE * 100)
         messagebox.showinfo(
-            "Pay Details",
+            "Program Details",
             f"Pay per hour: ${self.rate_per_hour:.2f}\n"
-            f"Net rate: {pct}% of gross"
+            f"Net rate: {pct}% of gross\n"
+            f"Working Directory: {CONFIG_DIR}"
         )
 
 

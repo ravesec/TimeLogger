@@ -421,47 +421,22 @@ class WorkLoggerApp:
             desc = "; ".join(daily_desc.get(d, []))
             rows.append({
                 'Date': d.strftime('%Y-%m-%d'),
-                'Payment Method': PAYMENT_METHOD_EMAIL,  # template email
+                'Payment Method': PAYMENT_METHOD_EMAIL,
                 'Description': desc,
                 'Hours': hrs
             })
 
-        # Add the summary block
-        rows.append({
-            'Date': '',
-            'Payment Method': '',
-            'Description': '',
-            'Hours': ''
-        })
-        rows.append({
-            'Date': 'Pay per Hour',
-            'Payment Method': '',
-            'Description': '',
-            'Hours': round(self.rate_per_hour, 2)
-        })
-
+        # Add the summary block...
+        rows.append({'Date': '', 'Payment Method': '', 'Description': '', 'Hours': ''})
+        rows.append({'Date': 'Pay per Hour', 'Payment Method': '', 'Description': '', 'Hours': round(self.rate_per_hour, 2)})
         total_hours = sum(daily_hours.values())
         gross_pay = total_hours * self.rate_per_hour
         net_pay = gross_pay * NET_RATE
-
-        rows.append({
-            'Date': 'Total Hours',
-            'Payment Method': '',
-            'Description': '',
-            'Hours': round(total_hours, 2)
-        })
-        rows.append({
-            'Date': 'Gross Pay',
-            'Payment Method': '',
-            'Description': '',
-            'Hours': round(gross_pay, 2)
-        })
-        rows.append({
-            'Date': 'Net Pay',
-            'Payment Method': '',
-            'Description': '',
-            'Hours': round(net_pay, 2)
-        })
+        rows.extend([
+            {'Date': 'Total Hours', 'Payment Method': '', 'Description': '', 'Hours': round(total_hours, 2)},
+            {'Date': 'Gross Pay', 'Payment Method': '', 'Description': '', 'Hours': round(gross_pay, 2)},
+            {'Date': 'Net Pay', 'Payment Method': '', 'Description': '', 'Hours': round(net_pay, 2)},
+        ])
 
         # Create DataFrame with correct column order
         df = pd.DataFrame(rows, columns=['Date', 'Payment Method', 'Description', 'Hours'])
@@ -477,10 +452,14 @@ class WorkLoggerApp:
             for cell in worksheet[1]:
                 cell.font = header_font
 
-            # Auto‑size columns
-            for col in worksheet.columns:
-                max_length = max(len(str(c.value)) for c in col)
-                worksheet.column_dimensions[col[0].column_letter].width = max_length + 2
+            # Auto‑size columns except "Description"
+            for col_cells in worksheet.columns:
+                header = col_cells[0].value
+                if header == 'Description':
+                    # skip resizing this column
+                    continue
+                max_length = max(len(str(cell.value)) for cell in col_cells)
+                worksheet.column_dimensions[col_cells[0].column_letter].width = max_length + 2
 
         messagebox.showinfo("Export Complete", f"XLSX report saved to:\n{path}")
 

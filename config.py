@@ -13,6 +13,7 @@ defaults = {
     "db_path": os.path.join(CONFIG_DIR, "timelog.db"),
     "window_title": "WorkLogger 2.0",
     "theme": "clam",
+    "payment_method_email": "spam@example.com",
     "ui": {
         "bg_color": "#121212",  # main background
         "fg_color": "#f2e7fe",  # main text
@@ -63,3 +64,8 @@ CAL_BG = CONFIG['ui']['cal_bg']
 CAL_FG = CONFIG['ui']['cal_fg']
 TREE_BG = CONFIG['ui']['tree_bg']
 BUTTON_COLOR = CONFIG['ui']['button_color']
+PAYMENT_METHOD_EMAIL = CONFIG.get(
+    "payment_method_email",
+    defaults["payment_method_email"]
+)
+

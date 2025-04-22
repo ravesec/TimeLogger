@@ -7,7 +7,7 @@ import calendar
 
 from storage import init_db, log_timecard, fetch_timecards, update_timecard, TimeCard
 from config import RATE_PER_HOUR, NET_RATE, WINDOW_TITLE, THEME
-from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, TREE_BG, BUTTON_COLOR, CONFIG_DIR
+from config import BG_COLOR, FG_COLOR, INVALID_COLOR, NO_DESC_COLOR, TREE_BG, BUTTON_COLOR, CONFIG_DIR, PAYMENT_METHOD_EMAIL
 from reporting import export_to_csv, generate_pdf_report
 
 # ensure DB is ready
@@ -392,8 +392,8 @@ class WorkLoggerApp:
         if not path:
             return
 
-        # Only valid entries from current view
-        raw = self.current_cards or fetch_timecards()
+        # Only valid entries from the current view
+        raw = self.current_cards
         cards = [tc for tc in raw if tc.valid]
 
         # Aggregate hours & descriptions per date
@@ -421,7 +421,7 @@ class WorkLoggerApp:
             desc = "; ".join(daily_desc.get(d, []))
             rows.append({
                 'Date': d.strftime('%Y-%m-%d'),
-                'Payment Method': 'spam@example.com',  # template email
+                'Payment Method': PAYMENT_METHOD_EMAIL,  # template email
                 'Description': desc,
                 'Hours': hrs
             })
@@ -440,7 +440,7 @@ class WorkLoggerApp:
             'Hours': round(self.rate_per_hour, 2)
         })
 
-        total_hours = sum(r['Hours'] for r in rows if isinstance(r['Hours'], (int, float)))
+        total_hours = sum(daily_hours.values())
         gross_pay = total_hours * self.rate_per_hour
         net_pay = gross_pay * NET_RATE
 

@@ -21,26 +21,30 @@ class WorkLoggerApp:
         self.root.configure(bg=BG_COLOR)
 
         # Hard‑code these to whatever fits your content:
-        self.root.geometry("560x380")
+        self.root.geometry("600x380")
         self.root.resizable(False, False)
 
         style = ttk.Style(root)
+        # TreeView style
         # TreeView style
         style.configure("Custom.Treeview",
                         background=TREE_BG,
                         fieldbackground=TREE_BG,
                         foreground=FG_COLOR,
-                        bordercolor=TREE_BG,  # same as bg
+                        bordercolor=TREE_BG,
                         borderwidth=0)
         style.layout("Custom.Treeview", [
-            ('Treeview.treearea', {'sticky': 'nswe'})  # drop all other elements
+            ('Treeview.treearea', {'sticky': 'nswe'})
         ])
+
+        # Heading style: flat, no border, fixed background even on hover
         style.configure("Custom.Treeview.Heading",
                         background=TREE_BG,
                         foreground=FG_COLOR,
                         borderwidth=0,
                         relief='flat')
         style.map("Custom.Treeview.Heading",
+                  background=[('active', TREE_BG), ('!active', TREE_BG)],
                   relief=[('active', 'flat'), ('!active', 'flat')])
         # Button style
         style.configure("Accent.TButton",
@@ -83,14 +87,36 @@ class WorkLoggerApp:
     def build_header(self):
         hdr = tk.Frame(self.root, bg=BG_COLOR)
         hdr.pack(fill='x', pady=5)
+
+        # left‑side: clock and elapsed
         self.time_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.time_lbl.pack(side='left', padx=10)
         self.elapsed_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.elapsed_lbl.pack(side='left', padx=10)
-        self.gross_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
-        self.gross_lbl.pack(side='right', padx=10)
+
+        # 2. Info button
+        self.info_btn = tk.Button(
+            hdr,
+            text='ℹ️',
+            bg=TREE_BG,
+            fg=BUTTON_COLOR,
+            bd=0,
+            highlightthickness=0,
+            activebackground=BG_COLOR,
+            activeforeground=FG_COLOR,
+            command=self.show_rates
+        )
+
+        self.info_btn.pack(side='right', padx=5)
+
+        # right‑side: pack in this order to get [Gross] [Info] [Net]
+        # 1. Net (so it ends up at the far right)
         self.net_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
         self.net_lbl.pack(side='right', padx=10)
+
+        # 3. Gross
+        self.gross_lbl = tk.Label(hdr, bg=BG_COLOR, fg=FG_COLOR)
+        self.gross_lbl.pack(side='right', padx=10)
 
     def build_filter_frame(self):
         frm = tk.Frame(self.root, bg=BG_COLOR)
@@ -116,7 +142,7 @@ class WorkLoggerApp:
         self.filter_btn.pack(side='left', expand=True, fill='x', padx=5)
 
         self.clear_btn = ttk.Button(
-            frm, text="Clear", command=self.clear_filter,
+            frm, text="Clear Filter", command=self.clear_filter,
             style="Flat.TButton", takefocus=False
         )
         self.clear_btn.pack(side='left', expand=True, fill='x', padx=5)
@@ -441,6 +467,17 @@ class WorkLoggerApp:
             messagebox.showwarning("Warning", "Stop logging first.")
             return
         self.root.destroy()
+
+    def show_rates(self):
+        """Display a popup with pay‑per‑hour and net‑rate details."""
+        # RATE_PER_HOUR is stored in self.rate_per_hour,
+        # NET_RATE is the fraction (e.g. 0.80)
+        pct = int(NET_RATE * 100)
+        messagebox.showinfo(
+            "Pay Details",
+            f"Pay per hour: ${self.rate_per_hour:.2f}\n"
+            f"Net rate: {pct}% of gross"
+        )
 
 
 class AddEntryWindow:
